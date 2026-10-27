@@ -1,0 +1,7 @@
+{
+  "name": "Calisoft 3D — conexión Git (sin compilación)",
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  "remoteUser": "vscode",
+  "postCreateCommand": "bash scripts/setup-upstream.sh",
+  "shutdownAction": "stopContainer"
+}
