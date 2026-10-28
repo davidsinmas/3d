@@ -64,3 +64,15 @@ Los registros completos permanecen en el Codespace, fuera de Git:
 5. No hay reintento automático ni cambio a una máquina superior.
 
 Versión desarrollada: SolidCraft 0.24.1 en la rama indicada. Versión Rust compilada: 0.24.1. Versión web compilada y validada: ninguna confirmada. OVH: sin cambios realizados; versión publicada no verificada. main y el repositorio original permanecen intactos. No se ejecutó GitHub Actions en esta recuperación.
+
+## Revisión posterior de registros del sistema
+
+Revisados los registros accesibles del mismo Codespace, sin compilar ni modificar configuración:
+
+- journalctl no está instalado; dmesg devuelve Operation not permitted. No se dispone desde el contenedor del registro del kernel/host; no se han intentado eludir esos permisos.
+- Revisados remoteagent.log, ptyhost.log, los logs de la extensión Codespaces de la sesión 20261028T042558 y creation.log. No se encontró una orden de apagado, OOM o SIGTERM que identifique al emisor a las 05:51:26 UTC.
+- remoteagent.log y ptyhost.log registran una conexión y actividad a las 05:58:41–05:58:42 UTC, posteriores al fallo, en la misma carpeta de sesión. Esto no respalda atribuir el fallo a una detención completa del entorno en ese instante, pero no prueba por sí solo ausencia de cualquier evento del host.
+- Los límites visibles memory.max y memory.high muestran max; los contadores memory.events actuales son cero. Estos valores son del cgroup visible y de la sesión reabierta; no describen necesariamente límites superiores del host durante el fallo. Los contadores antes/después de la ejecución original también eran cero.
+- Árbol Git local limpio. Cachés y registros preservados.
+
+Conclusión: la señal externa está documentada; su proceso emisor y motivo no pueden identificarse con los registros disponibles. El siguiente paso para atribuirla con certeza es consultar la telemetría del host mediante soporte oficial de GitHub, aportando el nombre del Codespace, la hora UTC y el extracto sanitizado de strace. No se ha enviado ninguna consulta de soporte ni se ha lanzado otro build.
