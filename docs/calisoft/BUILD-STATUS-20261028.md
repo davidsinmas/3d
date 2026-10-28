@@ -76,3 +76,33 @@ Revisados los registros accesibles del mismo Codespace, sin compilar ni modifica
 - Árbol Git local limpio. Cachés y registros preservados.
 
 Conclusión: la señal externa está documentada; su proceso emisor y motivo no pueden identificarse con los registros disponibles. El siguiente paso para atribuirla con certeza es consultar la telemetría del host mediante soporte oficial de GitHub, aportando el nombre del Codespace, la hora UTC y el extracto sanitizado de strace. No se ha enviado ninguna consulta de soporte ni se ha lanzado otro build.
+
+## Ensayos aislados sobre la copia sin DWARF y un trabajador Rayon
+
+La comprobación manual del archivo original encontró 351,74 MiB en secciones custom `.debug_*`. Se creó una copia separada de 106,89 MiB, conservando el original de aproximadamente 459 MiB y las demás secciones. Según el resultado aportado por el propietario, el primer ensayo de wasm-bindgen sobre esa copia terminó con 143 a los 33 s, con `SI_USER, si_pid=0, si_uid=61876` a las 10:20:40.958466.
+
+Después se comprobó en el código oficial de wasm-bindgen 0.2.129 que cli-support activa la característica parallel de walrus:
+https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.129/crates/cli-support/Cargo.toml
+
+Se autorizó y ejecutó UN ensayo distinto, solo del posprocesamiento, con `RAYON_NUM_THREADS=1`, sobre la misma copia sin DWARF, sin Cargo, cambios de máquina ni desactivación de protecciones. Los argumentos de wasm-bindgen fueron los mismos: target web, weak-refs y no-typescript. El directorio de salida fue independiente.
+
+Resultados medidos:
+- Inicio: 2026-10-28T10:33:54Z.
+- Terminación SIGTERM: 10:34:50.345983 UTC; finalización del registro: 10:34:51Z.
+- Resultado: 143; duración del proceso: 56 s.
+- Máximo RSS observado por muestreo cada segundo: **5.136.360 KiB (4,90 GiB)**.
+- Máximo de hilos observados del proceso: **2** (principal y un trabajador). La limitación Rayon se aplicó.
+- Mínimo MemAvailable observado: **890.520 KiB (aproximadamente 870 MiB)**; SwapFree=0.
+- Señal: `SIGTERM {si_signo=SIGTERM, si_code=SI_USER, si_pid=0, si_uid=61876}`.
+- Todos los contadores cgroup antes/después siguieron en cero.
+- Directorio de salida vacío; sin artefactos web completos. Sin procesos de compilación activos al terminar ni cambios en archivos versionados locales.
+
+Los logs, métricas, estado, timestamps y el script experimental permanecen fuera de Git en:
+`target/calisoft-build-logs/rayon1-JuHO9Ft0/`
+y `target/calisoft-build-logs/test-rayon1.sh`.
+
+Interpretación: la reducción del tamaño de entrada y de la concurrencia NO bastaron. La memoria disponible descendió fuertemente antes de la señal, lo que refuerza la hipótesis de presión de memoria y un protector del host. No demuestra que earlyoom u otro servicio concreto sea el emisor: no se dispone del log del host y el pico es muestreado, no exacto. Tampoco se ha demostrado una mejora de memoria frente al ensayo sin limitar Rayon, que no disponía de estas mismas métricas.
+
+No hay más reintentos automáticos. Siguientes opciones: solicitar identificación del emisor al soporte oficial, o autorizar una prueba acotada del mismo posprocesamiento con más RAM conservando el mismo Codespace y sus cachés. Cambiar a una máquina superior sigue requiriendo autorización del propietario; no se ha realizado.
+
+Versión desarrollada: base SolidCraft 0.24.1. Rust compilado: 0.24.1. Web compilada y validada: pendiente. Publicación OVH: sin cambios en esta intervención (la comprobación HTTP previa identificó Calisoft 3D 0.9.1).
