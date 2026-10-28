@@ -17,6 +17,7 @@ Desde la raíz del repositorio, en el terminal autenticado:
 ```bash
 git fetch origin
 git switch calisoft/build-low-memory-20261028
+bash -n scripts/setup-web.sh scripts/diagnose-build.sh scripts/build-web.sh
 bash scripts/diagnose-build.sh
 bash scripts/setup-web.sh
 bash scripts/build-web.sh --dry-run
