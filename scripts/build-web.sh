@@ -51,11 +51,21 @@ echo "Para comprobar recursos previamente: bash scripts/diagnose-build.sh"
 cd "$WEB"
 start="$(date +%s)"
 status=0
+# Capture both Trunk and tee statuses; pipefail alone can mask which one failed.
+set +e
 if [[ -x /usr/bin/time ]]; then
-  /usr/bin/time -v -o "$METRICS" trunk build --release --public-url ./ 2>&1 | tee "$LOG" || status="${PIPESTATUS[0]}"
+  /usr/bin/time -v -o "$METRICS" trunk build --release --public-url ./ 2>&1 | tee "$LOG"
+  process_status=("${PIPESTATUS[@]}")
 else
   echo "AVISO: /usr/bin/time ausente; no habrá medición de RSS máximo." | tee "$LOG"
-  trunk build --release --public-url ./ 2>&1 | tee -a "$LOG" || status="${PIPESTATUS[0]}"
+  trunk build --release --public-url ./ 2>&1 | tee -a "$LOG"
+  process_status=("${PIPESTATUS[@]}")
+fi
+set -e
+status="${process_status[0]}"
+if (( process_status[1] != 0 && status == 0 )); then
+  status="${process_status[1]}"
+  echo "ERROR: tee no pudo escribir el log completo." >&2
 fi
 elapsed=$(( $(date +%s) - start ))
 if [[ -r /sys/fs/cgroup/memory.events ]]; then
