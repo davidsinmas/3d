@@ -55,7 +55,7 @@ Revisar si en https://github.com/davidsinmas/3d/settings/codespaces aparece algu
 - Si solo aparece la opción `Set up prebuilds`: no crear ninguna.
 - Cambiar máquina de un Codespace ya existente desde https://github.com/codespaces → `...` → `Change machine type`; no forzar 2 CPU/8 GB durante la fase que ya necesitó 16 GB.
 
-La configuración alternativa `.devcontainer/upstream/devcontainer.json` solo hace `git fetch` y **NO** compila nada al abrir un Codespace. La descarga Git al iniciar consume red y tiempo; para evitar incluso eso, puede ejecutarse el script `setup-upstream.sh` solo a demanda, pero no tocar la configuración del Codespace con caché sin una revisión de su estado.
+La configuración alternativa `.devcontainer/upstream/devcontainer.json` **ya no ejecuta postCreateCommand**: no hace fetch automáticamente ni compila al crear un Codespace. Para consultar o actualizar el original, ejecutar manualmente `bash scripts/setup-upstream.sh`. No reconstruir el Codespace existente solo por este cambio: se arriesgaría la caché.
 
 ### 6. Guardado de documentos CAD en Safari / ordenador
 
