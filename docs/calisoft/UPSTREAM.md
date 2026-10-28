@@ -18,9 +18,10 @@ administrativa. Ver AUDIT.md para el estado real de la importación inicial.
 
 La configuración alternativa `.devcontainer/upstream/devcontainer.json` se llama
 **Calisoft 3D — conexión Git (sin compilación)**. Se puede seleccionar al crear un
-Codespace con opciones. Su postCreateCommand restaura automáticamente los remotos
-y hace fetch. No integra cambios ni instala un compilador ni modifica otra
-configuración de compilación. No se ha creado un Codespace durante este encargo.
+Codespace con opciones. Por ahorro de recursos, la configuración alternativa no ejecuta postCreateCommand:
+no descarga ni configura remotos automáticamente. Para conectar upstream y actualizar
+su historial, ejecutar a demanda `bash scripts/setup-upstream.sh`. No integra cambios,
+instala compiladores ni altera los ajustes de compilación. No se ha creado un Codespace durante este encargo.
 
 Cuando se incorpore la configuración definitiva de compilación, añade esta entrada
 al objeto `postCreateCommand`, conservando la imagen, recursos y comandos existentes:
