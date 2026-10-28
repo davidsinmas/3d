@@ -1,4 +1,6 @@
-# Compilación web — registros recuperados, 28 de octubre de 2026
+# Compilación web — wasm-bindgen superado con 16 GB, 28 de octubre de 2026
+
+**Estado más reciente:** el ensayo autorizado con 16 GB completó wasm-bindgen (código 0) y la validación estructural del WASM y sintáctica del JavaScript. No se ha completado aún wasm-opt, el ensamblado de Trunk, el hook offline ni la prueba funcional/ZIP. Los apartados anteriores al ensayo con 16 GB describen el historial de fallos, no el resultado más reciente.
 
 ## Estado comprobado
 
@@ -106,3 +108,50 @@ Interpretación: la reducción del tamaño de entrada y de la concurrencia NO ba
 No hay más reintentos automáticos. Siguientes opciones: solicitar identificación del emisor al soporte oficial, o autorizar una prueba acotada del mismo posprocesamiento con más RAM conservando el mismo Codespace y sus cachés. Cambiar a una máquina superior sigue requiriendo autorización del propietario; no se ha realizado.
 
 Versión desarrollada: base SolidCraft 0.24.1. Rust compilado: 0.24.1. Web compilada y validada: pendiente. Publicación OVH: sin cambios en esta intervención (la comprobación HTTP previa identificó Calisoft 3D 0.9.1).
+
+## Ensayo autorizado con 16 GB: wasm-bindgen correcto
+
+El propietario autorizó temporalmente 4 núcleos/16 GB en el MISMO Codespace, por un máximo de 10 minutos, utilizando solo la cuota incluida y restaurando después 2 núcleos/8 GB y la detención.
+
+Antes de iniciar, la página oficial de facturación de davidsinmas mostró 0,34 USD de cómputo cubiertos dentro del equivalente incluido de aproximadamente 10,80 USD, y 0,24 USD de almacenamiento dentro de aproximadamente 1,05 USD. No se habilitaron pagos ni se modificaron presupuestos. Se comprobó dentro del Codespace que había 15.993 MiB de RAM y 4 CPU, que seguía presente la copia sin DWARF y que no había otro proceso de compilación.
+
+Se reutilizó el mismo archivo de entrada de 106,89 MiB con wasm-bindgen 0.2.129, los mismos argumentos y RAYON_NUM_THREADS=1. Solo se amplió la RAM/CPU del entorno. Se añadió un límite preventivo de 480 s (timeout, con hasta 10 s adicionales para finalizar); NO se alcanzó ese límite.
+
+| Medición | Resultado |
+| --- | --- |
+| Inicio del proceso | 2026-10-28T10:48:01Z |
+| Fin del registro | 2026-10-28T10:48:51Z |
+| Resultado wasm-bindgen | **0, correcto** |
+| Duración | **50 s** |
+| Pico RSS observado cada segundo | **5.895.032 KiB, aproximadamente 5,62 GiB** |
+| Máximo de hilos observado | **2**, principal y un trabajador |
+| Mínimo MemAvailable muestreado | **8.071.952 KiB, aproximadamente 7,70 GiB** |
+| Swap | 0 |
+| Contadores cgroup antes/después | Todos permanecen en cero |
+
+Artefactos preservados:
+- `target/calisoft-build-logs/ram16-rayon1-c61bMjmP/out/solidcraft-web_bg.wasm`: **104.945.405 bytes**.
+- `target/calisoft-build-logs/ram16-rayon1-c61bMjmP/out/solidcraft-web.js`: aproximadamente 178 KiB.
+- En el mismo directorio del ensayo: timestamps, console.log, signals.log, memory.log, status.txt, metrics.txt y contadores cgroup.
+- Script aislado: `target/calisoft-build-logs/test-ram16-rayon1.sh`.
+- Se conservan el WASM original, la copia sin DWARF y toda la caché de Cargo. No se ejecutó Cargo ni una nueva compilación Rust.
+
+Validaciones ejecutadas con el Node ya instalado por VS Code (v24.22.1):
+- WebAssembly.validate sobre el WASM generado: **true**, salida 0.
+- `node --input-type=module --check` sobre el JavaScript generado: salida **0**.
+- Hash SHA-256 WASM: `7a1d5e7abcf3b86c9cb4de88028d036e6968d4b99422bdac38196ff0a5938462`.
+- Hash SHA-256 JavaScript: `d1f14197113b0ea92e7625f95e8c2c15f737e7a2c4c260a0b0585e430fb704f2`.
+
+Conclusión acotada: el bloqueo de esta fase se ha superado con 16 GB; el mismo posprocesamiento con 8 GB había recibido SIGTERM al quedar poca memoria disponible. La comparación respalda la hipótesis de presión de memoria en el entorno de 8 GB, pero no identifica nominalmente al emisor del SIGTERM. No se ha demostrado que fuese earlyoom ni que se debiera a un defecto de wasm-bindgen.
+
+La detención de la máquina de 16 GB se confirmó aproximadamente 262 s después de solicitar su arranque, dentro del máximo autorizado. Se restaura después la configuración de 2 núcleos/8 GB, sin reiniciar la fase pesada en esa máquina.
+
+### Pendiente para una entrega publicable
+
+1. Conservar los dos archivos generados para no repetir este paso.
+2. Ejecutar la optimización wasm-opt z requerida por el index original.
+3. Completar el ensamblado de recursos de Trunk y el hook web-offline (sw.js/build.json), procurando aprovechar herramientas y binarios existentes.
+4. Validar recursos y arranque en navegador; después empaquetar. Ningún ZIP está aún validado para publicación.
+5. Documentar el procedimiento definitivo antes de considerar reproducible la compilación web completa. Cualquier nueva ampliación de recursos queda fuera de este ensayo acotado y requiere respetar la autorización aplicable.
+
+Versión desarrollada: SolidCraft 0.24.1 en calisoft/build-low-memory-20261028. Rust compilado y posprocesamiento wasm-bindgen estructuralmente validado: 0.24.1. Aplicación web completa validada: pendiente. Versión publicada previamente comprobada en OVH: Calisoft 3D 0.9.1, sin cambios realizados. main, upstream y GitHub Actions no se modifican.
